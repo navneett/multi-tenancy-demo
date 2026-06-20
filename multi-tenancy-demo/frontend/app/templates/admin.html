@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Operator console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: -apple-system, sans-serif; margin: 0; background: #f4f3ef; color: #2c2c2a; }
+    header { display: flex; justify-content: space-between; align-items: center;
+              padding: 1rem 1.5rem; background: #fff; border-bottom: 1px solid #e5e3da; }
+    .container { max-width: 800px; margin: 0 auto; padding: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+    th, td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid #e5e3da; font-size: 14px; }
+    th { background: #f1efe8; font-weight: 500; }
+    .badge { padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 12px; }
+    .badge.active { background: #eaf3de; color: #27500a; }
+    .badge.disabled { background: #fcebeb; color: #791f1f; }
+    button { padding: 0.4rem 0.8rem; border: 1px solid #d3d1c7; border-radius: 6px;
+             background: #fff; cursor: pointer; font-size: 13px; }
+    .note { font-size: 13px; color: #5f5e5a; margin-top: 1.5rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Operator console</strong>
+    <div>
+      <span style="font-size: 13px; color: #5f5e5a; margin-right: 1rem;">{{ operator_email }}</span>
+      <a href="/logout" style="font-size: 13px; color: #5f5e5a;">Sign out</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <h3>Customers</h3>
+    <table>
+      <thead>
+        <tr><th>Email</th><th>UID</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr id="row-{{ c.uid }}">
+          <td>{{ c.email }}</td>
+          <td><code>{{ c.uid }}</code></td>
+          <td>
+            <span class="badge {{ 'disabled' if c.disabled else 'active' }}">
+              {{ 'disabled' if c.disabled else 'active' }}
+            </span>
+          </td>
+          <td>
+            {% if c.disabled %}
+            <button onclick="setStatus('{{ c.uid }}', 'enable')">Enable</button>
+            {% else %}
+            <button onclick="setStatus('{{ c.uid }}', 'disable')">Disable</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p class="note">
+      Disabling a customer here revokes their login session immediately. It
+      does not revoke any Drive grant they've already made inside
+      Agent Identity - that's managed separately at the project/auth-provider
+      IAM level (gcloud or the Agent Registry console), not from this screen.
+      See docs/OPERATOR_NOTES.md for the current manual steps.
+    </p>
+  </div>
+
+  <script>
+    async function setStatus(uid, action) {
+      const resp = await fetch(`/admin/customers/${uid}/${action}`, { method: "POST" });
+      if (resp.ok) window.location.reload();
+    }
+  </script>
+</body>
+</html>
